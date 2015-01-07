@@ -7,8 +7,14 @@ import com.witleaf.step.SettingsManager;
 
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.ConnectionListener;
+import org.jivesoftware.smack.PacketListener;
 import org.jivesoftware.smack.SmackAndroid;
+import org.jivesoftware.smack.SmackException;
 import org.jivesoftware.smack.XMPPConnection;
+import org.jivesoftware.smack.filter.MessageTypeFilter;
+import org.jivesoftware.smack.filter.PacketFilter;
+import org.jivesoftware.smack.packet.Message;
+import org.jivesoftware.smack.packet.Packet;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 
 /**
@@ -97,6 +103,20 @@ public class XmppManager {
 
             }
         });
+
+        try {
+            PacketFilter filter = new MessageTypeFilter(Message.Type.chat);
+            connection.addPacketListener(new PacketListener() {
+                @Override
+                public void processPacket(Packet packet) throws SmackException.NotConnectedException {
+                    Message message = (Message) packet;
+                    Log.d(tag, packet.getFrom() + "：" + message.getBody());
+                }
+            }, filter);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
     }
 
 
@@ -104,7 +124,7 @@ public class XmppManager {
         Log.d(tag, "服务器信息" + settings.serverHost + ":" + settings.serverPort + ":" + settings.serviceName);
         ConnectionConfiguration conf = new ConnectionConfiguration(settings.serverHost, settings.serverPort, settings.serviceName);
         conf.setSecurityMode(ConnectionConfiguration.SecurityMode.disabled);
-        conf.setSendPresence(false);
+        conf.setSendPresence(true);
         conf.setDebuggerEnabled(settings.debug);
         return new XMPPTCPConnection(conf);
     }
@@ -132,4 +152,19 @@ public class XmppManager {
         return true;
     }
 
+    public void send(XmppMsg xmppMsg, String to) {
+        Message msg = new Message();
+        msg.setTo(to);
+        msg.setType(Message.Type.chat);
+        msg.setBody(xmppMsg.toString());
+        if (mConnection != null && mConnection.isConnected()) {
+            try {
+                mConnection.sendPacket(msg);
+            } catch (Exception ex) {
+                Log.e(tag, "发送失败", ex);
+            }
+        } else {
+            Log.w(tag, "当前连接不可用");
+        }
+    }
 }

@@ -18,12 +18,15 @@ import com.witleaf.step.SettingsManager;
  */
 public class XmppService extends Service {
     public static final String SERVICE_THREAD_NAME = SettingsManager.APP_NAME + "Service";
-    private final String tag = "XmppService";
+    private static final String tag = "XmppService";
+    public static final String ACTION_SEND = "com.witleaf.step.xmpp.ACTION_SEND";
+    public static final String ACTION_XMPP_MESSAGE_RECEIVED = "com.wison.closer.action.XMPP.MESSAGE_RECEIVED";
     private static XmppService sIntance = null;
     private static XmppManager sXmppMgr = null;
     private final IBinder mBinder = new LocalBinder();
     private static volatile ServiceHandler sServiceHandler = null;
     private static volatile Looper sServiceLooper;
+
 
     private final class ServiceHandler extends Handler {
 
@@ -37,9 +40,20 @@ public class XmppService extends Service {
                 setupXmppManager();
             }
             Intent intent = (Intent) msg.obj;
-            Log.i(tag, "onStartCommand(): Intent " + intent.getAction());
-            sXmppMgr.requestConnection();
-            super.handleMessage(msg);
+            String action = intent.getAction();
+            Log.i(tag, "onStartCommand(): Intent " + action);
+            if (action.equals(ACTION_SEND)) {
+                Log.d(tag,"send");
+                XmppMsg xmppMsg = intent.getParcelableExtra("xmppMsg");
+                if (xmppMsg == null) {
+                    xmppMsg = new XmppMsg(intent.getStringExtra("message"));
+                }
+                sXmppMgr.send(xmppMsg,intent.getStringExtra("to"));
+            } else {
+                sXmppMgr.requestConnection();
+            }
+
+
         }
     }
 
@@ -85,6 +99,31 @@ public class XmppService extends Service {
     public class LocalBinder extends Binder {
         public XmppService getService() {
             return XmppService.this;
+        }
+    }
+
+
+    public void send(String msg, String to) {
+        send(new XmppMsg(msg), to);
+    }
+
+
+    public void send(XmppMsg msg, String to) {
+        if (sXmppMgr != null) {
+            sXmppMgr.send(msg, to);
+        } else {
+            Log.w(tag, "MainService send XmppMsg: _xmppMgr == null");
+        }
+    }
+
+    public static boolean sendToServiceHandler(Intent intent) {
+        if (sServiceHandler != null) {
+            Message message = sServiceHandler.obtainMessage();
+            message.obj = intent;
+            return sServiceHandler.sendMessage(message);
+        } else {
+            Log.v(tag, "handler为空");
+            return false;
         }
     }
 }

@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.View;
 
 import com.witleaf.xmpp.XmppService;
+import com.witleaf.xmpp.XmppTools;
 
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.SmackAndroid;
@@ -66,13 +67,22 @@ public class MainActivity extends ActionBarActivity {
 
 
     public void onClick(View view) {
-        SettingsManager settings = SettingsManager.getSettingsManager(this);
-        settings.setLogin("hanhan");
-        settings.setPassword("123456");
-        Intent i = new Intent("Connect", null, getApplicationContext(), XmppService.class);
-        startService(i);
 
-       // connect();
+        switch (view.getId()) {
+            case R.id.btnLogin:
+                SettingsManager settings = SettingsManager.getSettingsManager(this);
+                settings.setLogin("hanhan");
+                settings.setPassword("123456");
+                Intent i = new Intent("Connect", null, getApplicationContext(), XmppService.class);
+                startService(i);
+                break;
+            case R.id.btnSend:
+                XmppTools.send("I am here", "bobo@lovejog.com", this);
+                break;
+        }
+
+
+        // connect();
 
     }
 
@@ -102,9 +112,9 @@ public class MainActivity extends ActionBarActivity {
                     connection.connect();
                     Log.d(tag, "连接成功");
                 } catch (SmackException.ConnectionException e) {
-                    List<HostAddress> lists= e.getFailedAddresses();
-                    for(HostAddress h:lists){
-                        Log.d(tag,h.getErrorMessage());
+                    List<HostAddress> lists = e.getFailedAddresses();
+                    for (HostAddress h : lists) {
+                        Log.d(tag, h.getErrorMessage());
                     }
 
                     e.printStackTrace();
