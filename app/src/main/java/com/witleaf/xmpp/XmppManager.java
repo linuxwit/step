@@ -1,6 +1,7 @@
 package com.witleaf.xmpp;
 
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 
 import com.witleaf.step.SettingsManager;
@@ -16,6 +17,9 @@ import org.jivesoftware.smack.filter.PacketFilter;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Packet;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
+import org.jivesoftware.smack.util.dns.HostAddress;
+
+import java.util.List;
 
 /**
  * XMPP管理
@@ -53,15 +57,11 @@ public class XmppManager {
 
 
     public void requestConnection() {
-
-
         XMPPConnection connection = createConnection(mSettings);
         if (!connectAndAuth(connection)) {
             return;
         }
         onConnectionEstablished(connection);
-
-
     }
 
     private void onConnectionEstablished(XMPPConnection connection) {
@@ -71,6 +71,7 @@ public class XmppManager {
             @Override
             public void connected(XMPPConnection xmppConnection) {
                 Log.d(tag, "连接到服务器");
+                broadcastStatus(mContext, 0, 1, "登录成功");
             }
 
             @Override
@@ -119,6 +120,14 @@ public class XmppManager {
 
     }
 
+    public static void broadcastStatus(Context ctx, int oldState, int newState, String currentAction) {
+        Intent intent = new Intent(XmppService.ACTION_XMPP_CONNECTION_CHAGE);
+        intent.putExtra("old_state", oldState);
+        intent.putExtra("new_state", newState);
+        intent.putExtra("current_action", currentAction);
+        ctx.sendBroadcast(intent);
+    }
+
 
     private XMPPConnection createConnection(SettingsManager settings) {
         Log.d(tag, "服务器信息" + settings.serverHost + ":" + settings.serverPort + ":" + settings.serviceName);
@@ -131,8 +140,14 @@ public class XmppManager {
 
     private boolean connectAndAuth(XMPPConnection connection) {
         try {
-            Log.d(tag, "是安全连接吗？" + connection.isSecureConnection());
             connection.connect();
+        } catch (SmackException.ConnectionException e) {
+            List<HostAddress> lists = e.getFailedAddresses();
+            for (HostAddress h : lists) {
+                Log.d(tag, h.getErrorMessage());
+            }
+            broadcastStatus(mContext, 0, 1, "请检查您的网络链接后再重试");
+            return false;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -147,6 +162,7 @@ public class XmppManager {
             connection.login(login, password, mSettings.APP_NAME);
         } catch (Exception e) {
             e.printStackTrace();
+            broadcastStatus(mContext, 0, 1, "请检查用户名和密码后再重试");
             return false;
         }
         return true;

@@ -21,6 +21,8 @@ public class XmppService extends Service {
     private static final String tag = "XmppService";
     public static final String ACTION_SEND = "com.witleaf.step.xmpp.ACTION_SEND";
     public static final String ACTION_XMPP_MESSAGE_RECEIVED = "com.wison.closer.action.XMPP.MESSAGE_RECEIVED";
+    public static final String ACTION_XMPP_CONNECTION_CHAGE = "com.wison.closer.action.XMPP.CONNECTION_CHAGE";
+
     private static XmppService sIntance = null;
     private static XmppManager sXmppMgr = null;
     private final IBinder mBinder = new LocalBinder();
@@ -43,12 +45,12 @@ public class XmppService extends Service {
             String action = intent.getAction();
             Log.i(tag, "onStartCommand(): Intent " + action);
             if (action.equals(ACTION_SEND)) {
-                Log.d(tag,"send");
+                Log.d(tag, "send");
                 XmppMsg xmppMsg = intent.getParcelableExtra("xmppMsg");
                 if (xmppMsg == null) {
                     xmppMsg = new XmppMsg(intent.getStringExtra("message"));
                 }
-                sXmppMgr.send(xmppMsg,intent.getStringExtra("to"));
+                sXmppMgr.send(xmppMsg, intent.getStringExtra("to"));
             } else {
                 sXmppMgr.requestConnection();
             }

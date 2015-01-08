@@ -1,16 +1,24 @@
 package com.witleaf.step;
 
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.v4.app.Fragment;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
+import com.witleaf.step.adapters.TabAdapter;
+import com.witleaf.step.fragments.BuddiesFragment;
+import com.witleaf.step.fragments.LoginFragment;
 import com.witleaf.xmpp.XmppService;
 import com.witleaf.xmpp.XmppTools;
 
@@ -25,13 +33,33 @@ import org.jivesoftware.smackx.ping.PingFailedListener;
 import org.jivesoftware.smackx.ping.PingManager;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 
 public class MainActivity extends ActionBarActivity {
-
     private String tag = "MainActivity";
+    private ViewPager mPager;
+    private ArrayList<Fragment> mFragments = new ArrayList<Fragment>();
+
+    private LoginFragment mLoginFragment = new LoginFragment();
+    private BuddiesFragment mBuddiesFragment = new BuddiesFragment();
+
+    private final BroadcastReceiver mXmppReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            // Toast.makeText(getApplicationContext(), action, Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), intent.getStringExtra("current_action"), Toast.LENGTH_SHORT).show();
+
+
+            mFragments.remove(1);
+            mPager.getAdapter().notifyDataSetChanged();
+
+        }
+    };
+
 
     private ServiceConnection mXmppServiceConn = new ServiceConnection() {
         @Override
@@ -45,10 +73,17 @@ public class MainActivity extends ActionBarActivity {
         }
     };
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mPager = (ViewPager) findViewById(R.id.pager);
+        mFragments.add(mLoginFragment);
+        mFragments.add(mBuddiesFragment);
+
+        mPager.setAdapter(new TabAdapter(getSupportFragmentManager(), mFragments));
+
     }
 
 
@@ -57,11 +92,15 @@ public class MainActivity extends ActionBarActivity {
         super.onStart();
         Intent intent = new Intent(this, XmppService.class);
         bindService(intent, mXmppServiceConn, Service.BIND_AUTO_CREATE);
+
+        IntentFilter intentFilter = new IntentFilter(XmppService.ACTION_XMPP_CONNECTION_CHAGE);
+        registerReceiver(mXmppReceiver, intentFilter);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        unregisterReceiver(mXmppReceiver);
         unbindService(mXmppServiceConn);
     }
 
