@@ -34,11 +34,19 @@ import java.util.List;
  */
 public class XmppManager {
     private final String tag = "XmppManager";
+
+    public final static int XMPP_UNCONNECTED = 0;
+    public final static int XMPP_CONNECTED = 1;
+    public final static int XMPP_UNAUTHORED = 2;
+    public final static int XMPP_AUTHORED = 3;
+
     private static XmppManager mXmppManager = null;
     private static SettingsManager mSettings = null;
     private final SmackAndroid mSmackAndroid;
     private XMPPConnection mConnection = null;
     private Context mContext;
+
+    private int mXmppStatus = 0;
 
 
     public static XmppManager getInstance(Context ctx) {
@@ -57,11 +65,17 @@ public class XmppManager {
 
 
     public void requestConnection() {
-        XMPPConnection connection = createConnection(mSettings);
-        if (!connectAndAuth(connection)) {
-            return;
+        if (mConnection == null || !mConnection.isAuthenticated()) {
+            XMPPConnection connection = createConnection(mSettings);
+            if (!connectAndAuth(connection)) {
+                mXmppStatus = XMPP_CONNECTED;
+                return;
+            }
+            mXmppStatus = XMPP_AUTHORED;
+            Log.d(tag, "成功登录到服务器");
+            broadcastStatus(mContext, 0, 1, "登录成功");
+            onConnectionEstablished(connection);
         }
-        onConnectionEstablished(connection);
     }
 
     private void onConnectionEstablished(XMPPConnection connection) {
@@ -70,7 +84,7 @@ public class XmppManager {
         mConnection.addConnectionListener(new ConnectionListener() {
             @Override
             public void connected(XMPPConnection xmppConnection) {
-                Log.d(tag, "连接到服务器");
+                Log.d(tag, "成功登录到服务器");
                 broadcastStatus(mContext, 0, 1, "登录成功");
             }
 

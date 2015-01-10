@@ -28,7 +28,8 @@ public class SettingsManager {
     public SettingsManager(Context context) {
         mContext = context;
         mSharedPreferences = mContext.getSharedPreferences("Step", 1);
-        serverHost = getString("serverHost", "115.29.17.154");//set the host
+       // serverHost = getString("serverHost", "115.29.17.154");//set the host
+        serverHost = getString("serverHost", "192.168.80.88");
         serverPort = getInt("serverPort", 5222);
         serviceName = getString("ServiceName", "lovejog.com");
         pingIntervalInSec = getInt("pingIntervalInSec", 600);

@@ -16,9 +16,12 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import com.astuetz.PagerSlidingTabStrip;
+import com.witleaf.step.adapters.CardPagerAdapter;
 import com.witleaf.step.adapters.TabAdapter;
 import com.witleaf.step.fragments.BuddiesFragment;
 import com.witleaf.step.fragments.LoginFragment;
+import com.witleaf.step.models.UserCard;
 import com.witleaf.xmpp.XmppService;
 import com.witleaf.xmpp.XmppTools;
 
@@ -41,10 +44,8 @@ import java.util.List;
 public class MainActivity extends ActionBarActivity {
     private String tag = "MainActivity";
     private ViewPager mPager;
-    private ArrayList<Fragment> mFragments = new ArrayList<Fragment>();
 
-    private LoginFragment mLoginFragment = new LoginFragment();
-    private BuddiesFragment mBuddiesFragment = new BuddiesFragment();
+    private ArrayList<UserCard> mCardInfoList;
 
     private final BroadcastReceiver mXmppReceiver = new BroadcastReceiver() {
         @Override
@@ -53,10 +54,13 @@ public class MainActivity extends ActionBarActivity {
             // Toast.makeText(getApplicationContext(), action, Toast.LENGTH_SHORT).show();
             Toast.makeText(getApplicationContext(), intent.getStringExtra("current_action"), Toast.LENGTH_SHORT).show();
 
+            Log.d(tag, "收到广播" + action + ":" + intent.getStringExtra("current_action"));
 
-            mFragments.remove(1);
-            mPager.getAdapter().notifyDataSetChanged();
-
+        /*    if (mFragments.size() > 1) {
+                mFragments.remove(1);
+                mPager.setAdapter(new TabAdapter(getSupportFragmentManager(), mFragments));
+                mPager.getAdapter().notifyDataSetChanged();
+            }*/
         }
     };
 
@@ -72,6 +76,7 @@ public class MainActivity extends ActionBarActivity {
             Log.d(tag, "服务连接断开");
         }
     };
+    private PagerSlidingTabStrip mTabs;
 
 
     @Override
@@ -79,11 +84,15 @@ public class MainActivity extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mPager = (ViewPager) findViewById(R.id.pager);
-        mFragments.add(mLoginFragment);
-        mFragments.add(mBuddiesFragment);
+        mTabs = (PagerSlidingTabStrip) findViewById(R.id.tabs);
 
-        mPager.setAdapter(new TabAdapter(getSupportFragmentManager(), mFragments));
+        mCardInfoList = new ArrayList<UserCard>();
+        mCardInfoList.add(new UserCard("1", "老公"));
+        mCardInfoList.add(new UserCard("2", "老妈"));
+        mCardInfoList.add(new UserCard("3", "女儿"));
 
+        mPager.setAdapter(new CardPagerAdapter(getSupportFragmentManager(), mCardInfoList));
+        mTabs.setViewPager(mPager);
     }
 
 
@@ -110,8 +119,11 @@ public class MainActivity extends ActionBarActivity {
         switch (view.getId()) {
             case R.id.btnLogin:
                 SettingsManager settings = SettingsManager.getSettingsManager(this);
+                settings.saveSetting("serverHost", "192.168.80.88");
                 settings.setLogin("hanhan");
                 settings.setPassword("123456");
+
+                Log.d(tag, "点击Login" + settings.serverHost);
                 Intent i = new Intent("Connect", null, getApplicationContext(), XmppService.class);
                 startService(i);
                 break;
@@ -119,10 +131,7 @@ public class MainActivity extends ActionBarActivity {
                 XmppTools.send("I am here", "bobo@lovejog.com", this);
                 break;
         }
-
-
         // connect();
-
     }
 
     public void connect() {
