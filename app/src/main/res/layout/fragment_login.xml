@@ -1,24 +1,53 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
-    android:layout_height="match_parent" tools:context="com.witleaf.step.fragments.LoginFragment">
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/LoginFormContainer"
+    android:orientation="vertical" >
+
+    <EditText
+        android:id="@+id/username"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/greenDark"
+        android:hint="@string/usernameHint"
+        android:maxLines="1"
+        android:singleLine="true" />
+
+    <EditText
+        android:id="@+id/password"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/greenDark"
+        android:hint="@string/prompt_password"
+        android:imeActionId="@+id/login"
+        android:imeActionLabel="@string/action_sign_in_short"
+        android:imeOptions="actionUnspecified"
+        android:inputType="textPassword"
+        android:maxLines="1"
+        android:singleLine="true" />
 
     <Button
+        android:id="@+id/sign_in_button"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="16dp"
+        android:text="@string/action_sign_in_short" />
+
+
+    <TextView
+        android:id="@+id/orTV"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="测试连接"
-        android:id="@+id/btnLogin"
-        android:onClick="onClick"
-        android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true" />
+        android:layout_gravity="center_horizontal"
+        android:text="@string/orText"
+        android:layout_marginTop="16dp"
+        />
 
     <Button
-        android:layout_width="wrap_content"
+        android:id="@+id/register_button"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:text="发送"
-        android:id="@+id/btnSend"
-        android:onClick="onClick"
-        android:layout_below="@+id/btnLogin"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="46dp" />
-
-</FrameLayout>
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="16dp"
+        android:text="@string/action_register" />
+</LinearLayout>

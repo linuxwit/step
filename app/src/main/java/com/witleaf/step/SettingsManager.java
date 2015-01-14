@@ -13,6 +13,7 @@ public class SettingsManager {
     private final String tag = "SettingsManager";
 
     private static SettingsManager sSettingsManager;
+
     // XMPP connection
     public String serverHost;
     public String serviceName;
@@ -23,16 +24,30 @@ public class SettingsManager {
     private final Context mContext;
 
     private String _login;
-
+    private final int _topLoginFlag;
 
     public SettingsManager(Context context) {
         mContext = context;
         mSharedPreferences = mContext.getSharedPreferences("Step", 1);
-       // serverHost = getString("serverHost", "115.29.17.154");//set the host
+        // serverHost = getString("serverHost", "115.29.17.154");//set the host
         serverHost = getString("serverHost", "192.168.80.88");
         serverPort = getInt("serverPort", 5222);
         serviceName = getString("ServiceName", "lovejog.com");
+        _topLoginFlag = getInt("topLoginFlag", 1);
         pingIntervalInSec = getInt("pingIntervalInSec", 600);
+    }
+
+
+    private Boolean getBoolean(String key, Boolean defaultValue) {
+        try {
+            if (mSharedPreferences.contains(key)) {
+                return mSharedPreferences.getBoolean(key, defaultValue);
+            }
+        } catch (ClassCastException e) {
+            Log.e(tag, "Failed to retrieve setting " + key, e);
+        }
+        saveSetting(key, defaultValue);
+        return defaultValue;
     }
 
     private String getString(String key, String defaultValue) {
@@ -85,6 +100,18 @@ public class SettingsManager {
         return sSettingsManager;
     }
 
+    public boolean getTopLoginFlag() {
+        return getBoolean("topLoginFlag", true);
+    }
+
+    /**
+     * 设置是否需要开启登录界面
+     *
+     * @param yes 为true:表示要登录
+     */
+    public void setTopLoginFlag(boolean yes) {
+        saveSetting("topLoginFlag", yes);
+    }
 
     public Boolean saveSetting(String key, Boolean value) {
         getEditor().putBoolean(key, value).commit();

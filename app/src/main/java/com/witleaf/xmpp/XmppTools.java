@@ -49,4 +49,11 @@ public class XmppTools {
         }
         return i;
     }
+
+
+    public static boolean register(final Context ctx) {
+        Intent intent = new Intent(XmppService.ACTION_REGISTER);
+        intent.setClass(ctx, XmppService.class);
+        return XmppService.sendToServiceHandler(intent);
+    }
 }

@@ -7,18 +7,30 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.ViewPager;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
 import com.astuetz.PagerSlidingTabStrip;
+import com.readystatesoftware.systembartint.SystemBarTintManager;
 import com.witleaf.step.adapters.CardPagerAdapter;
 import com.witleaf.step.adapters.TabAdapter;
+import com.witleaf.step.fragments.AddFriendFragment;
 import com.witleaf.step.fragments.BuddiesFragment;
 import com.witleaf.step.fragments.LoginFragment;
 import com.witleaf.step.models.UserCard;
@@ -61,6 +73,7 @@ public class MainActivity extends ActionBarActivity {
                 mPager.setAdapter(new TabAdapter(getSupportFragmentManager(), mFragments));
                 mPager.getAdapter().notifyDataSetChanged();
             }*/
+            onLogin();
         }
     };
 
@@ -69,6 +82,7 @@ public class MainActivity extends ActionBarActivity {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             Log.d(tag, "服务连接");
+
         }
 
         @Override
@@ -77,27 +91,68 @@ public class MainActivity extends ActionBarActivity {
         }
     };
     private PagerSlidingTabStrip mTabs;
-
+    private Toolbar mToolbar;
+    private SystemBarTintManager mTintManager;
+    private DrawerLayout mDrawerLayout;
+    private ActionBarDrawerToggle mDrawerToggle;
+    SettingsManager settings;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Log.d(tag, "onCreate");
+        settings = SettingsManager.getSettingsManager(this);
         mPager = (ViewPager) findViewById(R.id.pager);
         mTabs = (PagerSlidingTabStrip) findViewById(R.id.tabs);
+        mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        if (settings.getTopLoginFlag()) {
+            Log.d(tag, "打开登录界面");
+            Intent login = new Intent(this, LoginActivity.class);
+            startActivity(login);
+            Log.d(tag, "完成登录界面");
+        } else {
+            onLogin();
+        }
+    }
 
+
+    public void onLogin() {
+        setToolbar();
+
+        mTintManager = new SystemBarTintManager(this);
+        mTintManager.setStatusBarTintEnabled(true);
+        changeColor(getResources().getColor(R.color.green));
         mCardInfoList = new ArrayList<UserCard>();
         mCardInfoList.add(new UserCard("1", "老公"));
         mCardInfoList.add(new UserCard("2", "老妈"));
         mCardInfoList.add(new UserCard("3", "女儿"));
-
         mPager.setAdapter(new CardPagerAdapter(getSupportFragmentManager(), mCardInfoList));
         mTabs.setViewPager(mPager);
     }
 
+    public void onNotLogin() {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.replace(R.id.main_view, LoginFragment.newInstance());
+        fragmentTransaction.commit();
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        return super.onOptionsItemSelected(item);
+    }
 
     @Override
     protected void onStart() {
+        Log.d(tag, "onStart");
         super.onStart();
         Intent intent = new Intent(this, XmppService.class);
         bindService(intent, mXmppServiceConn, Service.BIND_AUTO_CREATE);
@@ -107,15 +162,71 @@ public class MainActivity extends ActionBarActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        Log.d(tag, "onResume");
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        Log.d(tag, "onSaveInstanceState");
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onStop() {
+        Log.d(tag, "onStop");
+        super.onStop();
+    }
+
+    @Override
     protected void onDestroy() {
+        Log.d(tag, "onDestroy");
         super.onDestroy();
         unregisterReceiver(mXmppReceiver);
         unbindService(mXmppServiceConn);
     }
 
+    private void setToolbar() {
+        mToolbar.setTitle(R.string.app_name);
+        setSupportActionBar(mToolbar);
+
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer);
+        // 實作 drawer toggle 並放入 toolbar
+        mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, mToolbar, R.string.drawer_open, R.string.drawer_close);
+        mDrawerToggle.syncState();
+        mDrawerLayout.setDrawerListener(mDrawerToggle);
+
+        mToolbar.setOnMenuItemClickListener(new Toolbar.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                switch (item.getItemId()) {
+                    case R.id.action_add_person:
+                        AddFriendFragment addFriendFragment = new AddFriendFragment();
+                        FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+                        ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
+                        addFriendFragment.show(ft, "ft");
+                        break;
+                    default:
+                        break;
+                }
+                return true;
+            }
+        });
+    }
+
+    private void changeColor(int newColor) {
+        mTabs.setBackgroundColor(newColor);
+        mTintManager.setTintColor(newColor);
+        Drawable colorDrawable = new ColorDrawable(newColor);
+        Drawable bottomDrawable = new ColorDrawable(getResources().getColor(android.R.color.transparent));
+        LayerDrawable ld = new LayerDrawable(new Drawable[]{colorDrawable, bottomDrawable});
+        getSupportActionBar().setBackgroundDrawable(ld);
+    }
 
     public void onClick(View view) {
-
+        /*
         switch (view.getId()) {
             case R.id.btnLogin:
                 SettingsManager settings = SettingsManager.getSettingsManager(this);
@@ -130,7 +241,7 @@ public class MainActivity extends ActionBarActivity {
             case R.id.btnSend:
                 XmppTools.send("I am here", "bobo@lovejog.com", this);
                 break;
-        }
+        }*/
         // connect();
     }
 

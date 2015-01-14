@@ -22,6 +22,9 @@ public class XmppService extends Service {
     public static final String ACTION_SEND = "com.witleaf.step.xmpp.ACTION_SEND";
     public static final String ACTION_XMPP_MESSAGE_RECEIVED = "com.wison.closer.action.XMPP.MESSAGE_RECEIVED";
     public static final String ACTION_XMPP_CONNECTION_CHAGE = "com.wison.closer.action.XMPP.CONNECTION_CHAGE";
+    public static final String ACTION_REGISTER = "com.wison.closer.action.XMPP.REGISTER";
+    public static final String ACTION_LOGIN = "com.wison.closer.action.XMPP.LOGIN";
+    ;
 
     private static XmppService sIntance = null;
     private static XmppManager sXmppMgr = null;
@@ -44,18 +47,22 @@ public class XmppService extends Service {
             Intent intent = (Intent) msg.obj;
             String action = intent.getAction();
             Log.i(tag, "onStartCommand(): Intent " + action);
-            if (action.equals(ACTION_SEND)) {
-                Log.d(tag, "send");
-                XmppMsg xmppMsg = intent.getParcelableExtra("xmppMsg");
-                if (xmppMsg == null) {
-                    xmppMsg = new XmppMsg(intent.getStringExtra("message"));
-                }
-                sXmppMgr.send(xmppMsg, intent.getStringExtra("to"));
-            } else {
-                sXmppMgr.requestConnection();
+            switch (action) {
+                case ACTION_SEND:
+                    Log.d(tag, "send");
+                    XmppMsg xmppMsg = intent.getParcelableExtra("xmppMsg");
+                    if (xmppMsg == null) {
+                        xmppMsg = new XmppMsg(intent.getStringExtra("message"));
+                    }
+                    sXmppMgr.send(xmppMsg, intent.getStringExtra("to"));
+                case ACTION_REGISTER:
+                    Log.d(tag, "注册");
+                    sXmppMgr.register();
+                    break;
+                case ACTION_LOGIN:
+                    Log.d(tag, "登录");
+                    sXmppMgr.requestConnection();
             }
-
-
         }
     }
 
@@ -128,4 +135,5 @@ public class XmppService extends Service {
             return false;
         }
     }
+
 }

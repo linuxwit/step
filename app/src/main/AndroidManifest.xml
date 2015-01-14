@@ -22,6 +22,11 @@
             android:enabled="true"
             android:exported="false" >
         </service>
+
+        <activity
+            android:name=".LoginActivity"
+            android:label="@string/title_activity_login" >
+        </activity>
     </application>
 
 </manifest>
